@@ -85,7 +85,35 @@ if (OC_App::isEnabled('files_encryption')) {
 
 $nav = new OCP\Template('files', 'appnavigation', '');
 
-$nav->assign('navigationItems', \OCA\Files\App::getNavigationManager()->getAll());
+$navItems = \OCA\Files\App::getNavigationManager()->getAll();
+$nav->assign('navigationItems', $navItems);
+
+$contentItems = array();
+
+function renderScript($appName, $scriptName) {
+	$content = '';
+	$appPath = OC_App::getAppPath($appName);
+	$scriptPath = $appPath . '/' . $scriptName;
+	if (file_exists($scriptPath)) {
+		// TODO: sanitize path / script name ?
+		ob_start();
+		include $scriptPath;
+		$content = ob_get_contents();
+		@ob_end_clean();
+	}
+	return $content;
+}
+
+foreach ($navItems as $item) {
+	$content = '';
+	if (isset($item['script'])) {
+		$content = renderScript($item['appname'], $item['script']);
+	}
+	$contentItem = array();
+	$contentItem['appname'] = $item['appname'];
+	$contentItem['content'] = $content;
+	$contentItems[] = $contentItem;
+}
 
 OCP\Util::addscript('files', 'fileactions');
 OCP\Util::addscript('files', 'files');
@@ -107,5 +135,6 @@ $tmpl->assign("allowShareWithLink", $config->getAppValue('core', 'shareapi_allow
 $tmpl->assign("encryptionInitStatus", $encryptionInitStatus);
 $tmpl->assign('disableSharing', false);
 $tmpl->assign('appNavigation', $nav);
+$tmpl->assign('appContents', $contentItems);
 
 $tmpl->printPage();
