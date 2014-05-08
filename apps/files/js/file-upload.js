@@ -592,7 +592,7 @@ OC.Upload = {
 					if (FileList.lastAction) {
 						FileList.lastAction();
 					}
-					var name = getUniqueName(newname);
+					var name = FileList.getUniqueName(newname);
 					if (newname !== name) {
 						FileList.checkName(name, newname, true);
 						var hidden = true;
@@ -639,7 +639,7 @@ OC.Upload = {
 							} else { //or the domain
 								localName=(localName.match(/:\/\/(.[^\/]+)/)[1]).replace('www.','');
 							}
-							localName = getUniqueName(localName);
+							localName = FileList.getUniqueName(localName);
 							//IE < 10 does not fire the necessary events for the progress bar.
 							if ($('html.lte9').length === 0) {
 								$('#uploadprogressbar').progressbar({value:0});

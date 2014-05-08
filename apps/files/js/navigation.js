@@ -60,10 +60,12 @@
 			this.$el.find('li').removeClass('selected');
 			if (this.$currentContent) {
 				this.$currentContent.addClass('hidden');
+				this.$currentContent.trigger(jQuery.Event('hide'));
 			}
 			this.$currentContent = $('#app-content-' + itemId);
 			this.$currentContent.removeClass('hidden');
 			this.$el.find('li[data-id=' + itemId + ']').addClass('selected');
+			this.$currentContent.trigger(jQuery.Event('show'));
 		},
 
 		/**

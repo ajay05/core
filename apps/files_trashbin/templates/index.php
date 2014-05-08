@@ -5,6 +5,8 @@
 
 <div id="emptycontent" class="hidden"><?php p($l->t('Nothing in here. Your trash bin is empty!'))?></div>
 
+<input type="hidden" name="dir" value="<?php p($_['dir']) ?>" id="dir">
+
 <table id="filestable">
 	<thead>
 		<tr>
