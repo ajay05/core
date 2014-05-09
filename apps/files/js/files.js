@@ -10,7 +10,7 @@
 
 /* global getURLParameter */
 /**
- * Utility class
+ * Utility class for file related operations
  */
 (function() {
 	var Files = {
@@ -210,61 +210,30 @@
 			}
 		},
 
-		getPathForPreview: function(name) {
-			var path = $('#dir').val() + '/' + name;
-			return path;
-		},
-
 		/**
 		 * Generates a preview URL based on the URL space.
 		 * @param urlSpec map with {x: width, y: height, file: file path}
 		 * @return preview URL
+		 * @deprecated used OCA.Files.FileList.generatePreviewUrl instead
 		 */
 		generatePreviewUrl: function(urlSpec) {
-			urlSpec = urlSpec || {};
-			if (!urlSpec.x) {
-				urlSpec.x = $('#filestable').data('preview-x');
-			}
-			if (!urlSpec.y) {
-				urlSpec.y = $('#filestable').data('preview-y');
-			}
-			urlSpec.y *= window.devicePixelRatio;
-			urlSpec.x *= window.devicePixelRatio;
-			urlSpec.forceIcon = 0;
-			return OC.generateUrl('/core/preview.png?') + $.param(urlSpec);
+			console.warn('DEPRECATED: please use generatePreviewUrl() from an OCA.Files.FileList instance');
+			return OCA.Files.App.fileList.generatePreviewUrl(urlSpec);
 		},
 
+		/**
+		 * Lazy load preview
+		 * @deprecated used OCA.Files.FileList.lazyLoadPreview instead
+		 */
 		lazyLoadPreview : function(path, mime, ready, width, height, etag) {
-			// get mime icon url
-			Files.getMimeIcon(mime, function(iconURL) {
-				var previewURL,
-					urlSpec = {};
-				ready(iconURL); // set mimeicon URL
-
-				urlSpec.file = Files.fixPath(path);
-
-				if (etag){
-					// use etag as cache buster
-					urlSpec.c = etag;
-				}
-				else {
-					console.warn('Files.lazyLoadPreview(): missing etag argument');
-				}
-
-				previewURL = Files.generatePreviewUrl(urlSpec);
-				previewURL = previewURL.replace('(', '%28');
-				previewURL = previewURL.replace(')', '%29');
-
-				// preload image to prevent delay
-				// this will make the browser cache the image
-				var img = new Image();
-				img.onload = function(){
-					// if loading the preview image failed (no preview for the mimetype) then img.width will < 5
-					if (img.width > 5) {
-						ready(previewURL);
-					}
-				};
-				img.src = previewURL;
+			console.warn('DEPRECATED: please use lazyLoadPreview() from an OCA.Files.FileList instance');
+			return OCA.Files.App.fileList.lazyLoadPreview({
+				path: path,
+				mime: mime,
+				callback: ready,
+				width: width,
+				height: height,
+				etag: etag
 			});
 		},
 
@@ -278,6 +247,7 @@
 
 			Files.setupDragAndDrop();
 
+			// TODO: move file list related code (upload) to OCA.Files.FileList
 			$('#file_action_panel').attr('activeAction', false);
 
 			// Triggers invisible file input
@@ -424,8 +394,8 @@ var createDragShadow = function(event) {
 		if (elem.type === 'dir') {
 			newtr.find('td.filename').attr('style','background-image:url('+OC.imagePath('core', 'filetypes/folder.png')+')');
 		} else {
-			var path = OCA.Files.Files.getPathForPreview(elem.name);
-			OCA.Files.Files.lazyLoadPreview(path, elem.mime, function(previewpath) {
+			var path = dir + '/' + elem.name;
+			OCA.Files.App.fileList.lazyLoadPreview(path, elem.mime, function(previewpath) {
 				newtr.find('td.filename').attr('style','background-image:url('+previewpath+')');
 			}, null, null, elem.etag);
 		}

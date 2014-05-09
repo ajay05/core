@@ -14,16 +14,8 @@
 		updateStorageStatistics: function() {
 			// no op because the trashbin doesn't have
 			// storage info like free space / used space
-		},
-
-		generatePreviewUrl: function(urlSpec) {
-			return OC.generateUrl('/apps/files_trashbin/ajax/preview.php?') + $.param(urlSpec);
-		},
-
-		getDownloadUrl: function(action, params) {
-			// no downloads
-			return '#';
 		}
+
 	});
 
 	OCA.Trashbin.Files = Files;

@@ -208,7 +208,7 @@
 		/**
 		 * Register the actions that are used by default for the files app.
 		 */
-		registerDefaultActions: function(fileList, files) {
+		registerDefaultActions: function(fileList) {
 			this.register('all', 'Delete', OC.PERMISSION_DELETE, function () {
 				return OC.imagePath('core', 'actions/delete');
 			}, function (filename) {
@@ -242,7 +242,7 @@
 			this.register(downloadScope, 'Download', OC.PERMISSION_READ, function () {
 				return OC.imagePath('core', 'actions/download');
 			}, function (filename) {
-				var url = files.getDownloadUrl(filename);
+				var url = OCA.Files.Files.getDownloadUrl(filename, fileList.getCurrentDirectory());
 				if (url) {
 					OC.redirect(url);
 				}

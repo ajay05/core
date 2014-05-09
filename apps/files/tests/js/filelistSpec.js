@@ -19,10 +19,9 @@
 *
 */
 
-/* global FileList */
 describe('OCA.Files.FileList tests', function() {
-	var testFiles, alertStub, notificationStub,
-		pushStateStub, fileList;
+	var testFiles, alertStub, notificationStub, fileList;
+	var FileActions = OCA.Files.FileActions;
 
 	/**
 	 * Generate test file data
@@ -59,14 +58,12 @@ describe('OCA.Files.FileList tests', function() {
 		// dummy files table
 		$body.append('<table id="filestable"></table>');
 
-		// prevents URL changes during tests
-		pushStateStub = sinon.stub(window.history, 'pushState');
-
 		alertStub = sinon.stub(OC.dialogs, 'alert');
 		notificationStub = sinon.stub(OC.Notification, 'show');
 
 		// init parameters and test table elements
 		$('#testArea').append(
+			'<div id="app-content-files">' +
 			'<input type="hidden" id="dir" value="/subdir"></input>' +
 			'<input type="hidden" id="permissions" value="31"></input>' +
 			// dummy controls
@@ -87,7 +84,8 @@ describe('OCA.Files.FileList tests', function() {
 		   	'<tbody id="fileList"></tbody>' +
 			'<tfoot></tfoot>' +
 			'</table>' +
-			'<div id="emptycontent">Empty content message</div>'
+			'<div id="emptycontent">Empty content message</div>' +
+			'</div>'
 		);
 
 		testFiles = [{
@@ -120,16 +118,18 @@ describe('OCA.Files.FileList tests', function() {
 			etag: '456'
 		}];
 
-		fileList = new OCA.Files.FileList($('#testArea'));
+		fileList = new OCA.Files.FileList($('#app-content-files'));
+		FileActions.registerDefaultActions(fileList);
+		fileList.setFileActions(FileActions);
 	});
 	afterEach(function() {
 		testFiles = undefined;
 		fileList = undefined;
 
+		FileActions.clear();
 		$('#dir, #permissions, #filestable').remove();
 		notificationStub.restore();
 		alertStub.restore();
-		pushStateStub.restore();
 	});
 	describe('Getters', function() {
 		it('Returns the current directory', function() {
@@ -211,7 +211,7 @@ describe('OCA.Files.FileList tests', function() {
 				name: 'testFile.txt'
 			};
 
-		    clock.tick(123456);
+			clock.tick(123456);
 			var $tr = fileList.add(fileData);
 
 			expect($tr).toBeDefined();
@@ -232,7 +232,7 @@ describe('OCA.Files.FileList tests', function() {
 				type: 'dir',
 				name: 'testFolder'
 			};
-		    clock.tick(123456);
+			clock.tick(123456);
 			var $tr = fileList.add(fileData);
 
 			expect($tr).toBeDefined();
@@ -318,6 +318,7 @@ describe('OCA.Files.FileList tests', function() {
 			expect(fileList.files[4]).toEqual(fileData);
 		});
 		it('removes empty content message and shows summary when adding first file', function() {
+			var $summary;
 			var fileData = {
 				type: 'file',
 				name: 'first file.txt',
@@ -340,6 +341,7 @@ describe('OCA.Files.FileList tests', function() {
 	});
 	describe('Removing files from the list', function() {
 		it('Removes file from list when calling remove() and updates summary', function() {
+			var $summary;
 			var $removedEl;
 			fileList.setFiles(testFiles);
 			$removedEl = fileList.remove('One.txt');
@@ -358,6 +360,7 @@ describe('OCA.Files.FileList tests', function() {
 			expect(fileList.isEmpty).toEqual(false);
 		});
 		it('Shows empty content when removing last file', function() {
+			var $summary;
 			fileList.setFiles([testFiles[0]]);
 			fileList.remove('One.txt');
 			expect($('#fileList tr').length).toEqual(0);
@@ -385,6 +388,7 @@ describe('OCA.Files.FileList tests', function() {
 			expect(OC.parseQueryString(query)).toEqual({'dir': '/subdir', files: '["One.txt","Two.jpg"]'});
 		}
 		it('calls delete.php, removes the deleted entries and updates summary', function() {
+			var $summary;
 			fileList.setFiles(testFiles);
 			doDelete();
 
@@ -426,6 +430,7 @@ describe('OCA.Files.FileList tests', function() {
 			expect(fileList.$fileList.find('tr .progress-icon:not(.delete-icon)').length).toEqual(4);
 		});
 		it('updates summary when deleting last file', function() {
+			var $summary;
 			fileList.setFiles([testFiles[0], testFiles[1]]);
 			doDelete();
 
@@ -714,6 +719,7 @@ describe('OCA.Files.FileList tests', function() {
 			expect(handler.calledOnce).toEqual(true);
 		});
 		it('does not update summary when removing non-existing files', function() {
+			var $summary;
 			// single file
 			fileList.setFiles([testFiles[0]]);
 			$summary = $('#filestable .summary');
@@ -832,7 +838,7 @@ describe('OCA.Files.FileList tests', function() {
 		}
 
 		beforeEach(function() {
-			previewLoadStub = sinon.stub(Files, 'lazyLoadPreview');
+			previewLoadStub = sinon.stub(OCA.Files.FileList.prototype, 'lazyLoadPreview');
 		});
 		afterEach(function() {
 			previewLoadStub.restore();
@@ -879,7 +885,7 @@ describe('OCA.Files.FileList tests', function() {
 			expect(getImageUrl($td)).toEqual(OC.webroot + '/core/img/filetypes/file.svg');
 			expect(previewLoadStub.calledOnce).toEqual(true);
 			// third argument is callback
-			previewLoadStub.getCall(0).args[2](OC.webroot + '/somepath.png');
+			previewLoadStub.getCall(0).args[0].callback(OC.webroot + '/somepath.png');
 			expect(getImageUrl($td)).toEqual(OC.webroot + '/somepath.png');
 		});
 		it('renders default file type icon when no icon was provided and no preview is available', function() {
@@ -975,11 +981,16 @@ describe('OCA.Files.FileList tests', function() {
 			showMaskStub.restore();
 			hideMaskStub.restore();
 		});
-		it('changes URL to target dir', function() {
+		it('triggers "directoryChanged" event when changing directory', function() {
+			var handler = sinon.stub();
+			$('#app-content-files').on('directoryChanged', handler);
 			fileList.changeDirectory('/somedir');
-			expect(pushStateStub.calledOnce).toEqual(true);
-			expect(pushStateStub.getCall(0).args[0]).toEqual({dir: '/somedir'});
-			expect(pushStateStub.getCall(0).args[2]).toEqual(OC.webroot + '/index.php/apps/files?dir=/somedir');
+			expect(handler.calledOnce).toEqual(true);
+			expect(handler.getCall(0).args[0].dir).toEqual('/somedir');
+		});
+		it('changes the directory when receiving "urlChanged" event', function() {
+			$('#app-content-files').trigger(new $.Event('urlChanged', {view: 'files', dir: '/somedir'}));
+			expect(fileList.getCurrentDirectory()).toEqual('/somedir');
 		});
 		it('refreshes breadcrumb after update', function() {
 			var setDirSpy = sinon.spy(fileList.breadcrumb, 'setDirectory');
@@ -1069,7 +1080,7 @@ describe('OCA.Files.FileList tests', function() {
 			});
 		});
 		it('dropping files on same dir breadcrumb does nothing', function() {
-			var request, query, testDir = '/subdir/two/three with space/four/five';
+			var testDir = '/subdir/two/three with space/four/five';
 			fileList.changeDirectory(testDir);
 			fakeServer.respond();
 			var $crumb = fileList.breadcrumb.$el.find('.crumb:last');
@@ -1093,13 +1104,13 @@ describe('OCA.Files.FileList tests', function() {
 	});
 	describe('Download Url', function() {
 		it('returns correct download URL for single files', function() {
-			expect(Files.getDownloadUrl('some file.txt')).toEqual(OC.webroot + '/index.php/apps/files/ajax/download.php?dir=%2Fsubdir&files=some%20file.txt');
-			expect(Files.getDownloadUrl('some file.txt', '/anotherpath/abc')).toEqual(OC.webroot + '/index.php/apps/files/ajax/download.php?dir=%2Fanotherpath%2Fabc&files=some%20file.txt');
+			expect(fileList.getDownloadUrl('some file.txt')).toEqual(OC.webroot + '/index.php/apps/files/ajax/download.php?dir=%2Fsubdir&files=some%20file.txt');
+			expect(fileList.getDownloadUrl('some file.txt', '/anotherpath/abc')).toEqual(OC.webroot + '/index.php/apps/files/ajax/download.php?dir=%2Fanotherpath%2Fabc&files=some%20file.txt');
 			$('#dir').val('/');
-			expect(Files.getDownloadUrl('some file.txt')).toEqual(OC.webroot + '/index.php/apps/files/ajax/download.php?dir=%2F&files=some%20file.txt');
+			expect(fileList.getDownloadUrl('some file.txt')).toEqual(OC.webroot + '/index.php/apps/files/ajax/download.php?dir=%2F&files=some%20file.txt');
 		});
 		it('returns correct download URL for multiple files', function() {
-			expect(Files.getDownloadUrl(['a b c.txt', 'd e f.txt'])).toEqual(OC.webroot + '/index.php/apps/files/ajax/download.php?dir=%2Fsubdir&files=%5B%22a%20b%20c.txt%22%2C%22d%20e%20f.txt%22%5D');
+			expect(fileList.getDownloadUrl(['a b c.txt', 'd e f.txt'])).toEqual(OC.webroot + '/index.php/apps/files/ajax/download.php?dir=%2Fsubdir&files=%5B%22a%20b%20c.txt%22%2C%22d%20e%20f.txt%22%5D');
 		});
 		it('returns the correct ajax URL', function() {
 			expect(fileList.getAjaxUrl('test', {a:1, b:'x y'})).toEqual(OC.webroot + '/index.php/apps/files/ajax/test.php?a=1&b=x%20y');

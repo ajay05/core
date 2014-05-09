@@ -44,7 +44,7 @@ OCA.Trashbin.App = {
 					files: JSON.stringify([filename]),
 					dir: fileList.getCurrentDirectory()
 				},
-				_.bind(fileList._removeCallback, self)
+				_.bind(fileList._removeCallback, fileList)
 			);
 		}, t('files_trashbin', 'Restore'));
 
@@ -60,7 +60,7 @@ OCA.Trashbin.App = {
 					files: JSON.stringify([filename]),
 					dir: fileList.getCurrentDirectory()
 				},
-				_.bind(fileList._removeCallback, self)
+				_.bind(fileList._removeCallback, fileList)
 			);
 		});
 		fileList.setFileActions(fileActions);

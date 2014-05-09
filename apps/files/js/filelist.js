@@ -264,7 +264,7 @@
 				files = _.pluck(this.getSelectedFiles(), 'name');
 			}
 			OC.Notification.show(t('files','Your download is being prepared. This might take some time if the files are big.'));
-			OC.redirect(Files.getDownloadUrl(files, dir));
+			OC.redirect(this.getDownloadUrl(files, dir));
 			return false;
 		},
 
@@ -505,7 +505,7 @@
 				linkUrl = this.linkTo(this.getCurrentDirectory() + '/' + name);
 			}
 			else {
-				linkUrl = Files.getDownloadUrl(name, this.getCurrentDirectory());
+				linkUrl = this.getDownloadUrl(name, this.getCurrentDirectory());
 			}
 			td.append('<input id="select-' + fileData.id + '" type="checkbox" /><label for="select-' + fileData.id + '"></label>');
 			var linkElem = $('<a></a>').attr({
@@ -679,9 +679,14 @@
 			if (fileData.isPreviewAvailable) {
 				// lazy load / newly inserted td ?
 				if (!fileData.icon) {
-					Files.lazyLoadPreview(Files.getPathForPreview(fileData.name), mime, function(url) {
-						filenameTd.css('background-image', 'url(' + url + ')');
-					}, null, null, fileData.etag);
+					this.lazyLoadPreview({
+						path: this.getCurrentDirectory() + '/' + fileData.name,
+						mime: mime,
+						etag: fileData.etag,
+						callback: function(url) {
+							filenameTd.css('background-image', 'url(' + url + ')');
+						}
+					});
 				}
 				else {
 					// set the preview URL directly
@@ -689,7 +694,7 @@
 							file: this.getCurrentDirectory() + '/' + fileData.name,
 							c: fileData.etag
 						};
-					var previewUrl = Files.generatePreviewUrl(urlSpec);
+					var previewUrl = this.generatePreviewUrl(urlSpec);
 					previewUrl = previewUrl.replace('(', '%28').replace(')', '%29');
 					filenameTd.css('background-image', 'url(' + previewUrl + ')');
 				}
@@ -823,7 +828,78 @@
 		},
 
 		getAjaxUrl: function(action, params) {
-			return Files.getAjaxUrl(action, params);	
+			return Files.getAjaxUrl(action, params);
+		},
+
+		getDownloadUrl: function(files, dir) {
+			return Files.getDownloadUrl(files, dir || this.getCurrentDirectory());
+		},
+
+		/**
+		 * Generates a preview URL based on the URL space.
+		 * @param urlSpec map with {x: width, y: height, file: file path}
+		 * @return preview URL
+		 */
+		generatePreviewUrl: function(urlSpec) {
+			urlSpec = urlSpec || {};
+			if (!urlSpec.x) {
+				urlSpec.x = this.$table.data('preview-x') || 36;
+			}
+			if (!urlSpec.y) {
+				urlSpec.y = this.$table.data('preview-y') || 36;
+			}
+			urlSpec.y *= window.devicePixelRatio;
+			urlSpec.x *= window.devicePixelRatio;
+			urlSpec.forceIcon = 0;
+			return OC.generateUrl('/core/preview.png?') + $.param(urlSpec);
+		},
+
+		/**
+		 * Lazy load a file's preview.
+		 * 
+		 * @param path path of the file
+		 * @param mime mime type
+		 * @param callback callback function to call when the image was loaded
+		 * @param etag file etag (for caching)
+		 */
+		lazyLoadPreview : function(options) {
+			var self = this;
+			var path = options.path;
+			var mime = options.mime;
+			var ready = options.callback;
+			var etag = options.etag;
+
+			// get mime icon url
+			OCA.Files.Files.getMimeIcon(mime, function(iconURL) {
+				var previewURL,
+					urlSpec = {};
+				ready(iconURL); // set mimeicon URL
+
+				urlSpec.file = OCA.Files.Files.fixPath(path);
+
+				if (etag){
+					// use etag as cache buster
+					urlSpec.c = etag;
+				}
+				else {
+					console.warn('OCA.Files.FileList.lazyLoadPreview(): missing etag argument');
+				}
+
+				previewURL = self.generatePreviewUrl(urlSpec);
+				previewURL = previewURL.replace('(', '%28');
+				previewURL = previewURL.replace(')', '%29');
+
+				// preload image to prevent delay
+				// this will make the browser cache the image
+				var img = new Image();
+				img.onload = function(){
+					// if loading the preview image failed (no preview for the mimetype) then img.width will < 5
+					if (img.width > 5) {
+						ready(previewURL);
+					}
+				};
+				img.src = previewURL;
+			});
 		},
 
 		setDirectoryPermissions: function(permissions) {

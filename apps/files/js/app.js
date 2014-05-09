@@ -30,26 +30,6 @@
 		return '';
 	}
 
-	/**
-	 * Parse the query/search part of the URL.
-	 * Also try and parse it from the URL hash (for IE8)
-	 *
-	 * @return map of parameters
-	 */
-	function parseUrlQuery() {
-		var query = parseHashQuery(),
-			params;
-		// try and parse from URL hash first
-		if (query) {
-			params = OC.parseQueryString(decodeQuery(query));
-		}
-		// else read from query attributes
-		if (!params) {
-			params = OC.parseQueryString(decodeQuery(location.search));
-		}
-		return params || {};
-	}
-
 	var App = {
 		navigation: null,
 
@@ -102,11 +82,6 @@
 			$('#app-content>div').on('directoryChanged', _.bind(this._onDirectoryChanged, this));
 
 			$('#app-navigation').on('itemChanged', _.bind(this._onNavigationChanged, this));
-			/*
-			$('#app-content-files').on('show', function() {
-				self.fileList.changeDirectory(self.fileList.getCurrentDirectory(), false, true);
-			});
-			*/
 		},
 
 		/**
@@ -134,16 +109,39 @@
 		},
 
 		/**
+		 * Parse the query/search part of the URL.
+		 * Also try and parse it from the URL hash (for IE8)
+		 *
+		 * @return map of parameters
+		 */
+		_parseUrlQuery: function() {
+			var query = parseHashQuery(),
+				params;
+			// try and parse from URL hash first
+			if (query) {
+				params = OC.parseQueryString(decodeQuery(query));
+			}
+			// else read from query attributes
+			if (!params) {
+				params = OC.parseQueryString(decodeQuery(location.search));
+			}
+			return params || {};
+		},
+
+		/**
 		 * Event handler for when the URL changed
 		 */
 		_onPopState: function(e) {
 			var params = _.extend({
 				dir: '/',
 				view: 'files'
-			}, (e && e.state) || parseUrlQuery());
+			}, (e && e.state) || this._parseUrlQuery());
 
+			var lastId = this.navigation.getActiveItem();
 			this.navigation.setActiveItem(params.view, {silent: true});
-			this.navigation.getActiveContainer().trigger(new $.Event('show'));
+			if (lastId !== this.navigation.getActiveItem()) {
+				this.navigation.getActiveContainer().trigger(new $.Event('show'));
+			}
 			this.navigation.getActiveContainer().trigger(new $.Event('urlChanged', params));
 		},
 
