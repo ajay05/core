@@ -38,10 +38,7 @@
 
 			// override crumb URL maker
 			this.breadcrumb.getCrumbUrl = function(part, index) {
-				if (index === 0) {
-					return OC.linkTo('files', 'index.php');
-				}
-				return OC.linkTo('files_trashbin', 'index.php')+"?dir=" + encodeURIComponent(part.dir);
+				return OC.linkTo('files_trashbin', 'index.php')+"?view=trashbin&dir=" + encodeURIComponent(part.dir);
 			};
 			/**
 			 * Override crumb making to add "Deleted Files" entry
@@ -50,13 +47,7 @@
 			 */
 			this.breadcrumb._makeCrumbs = function() {
 				var parts = OCA.Files.BreadCrumb.prototype._makeCrumbs.apply(this, arguments);
-				// duplicate first part
-				parts.unshift(parts[0]);
-				parts[1] = {
-					dir: '/',
-					name: t('files_trashbin', 'Deleted Files')
-				};
-				for (var i = 2; i < parts.length; i++) {
+				for (var i = 1; i < parts.length; i++) {
 					parts[i].name = getDeletedFileName(parts[i].name);
 				}
 				return parts;
@@ -79,17 +70,6 @@
 			var tr = OCA.Files.FileList.prototype._createRow.apply(this, arguments);
 			tr.find('td.filesize').remove();
 			return tr;
-		},
-
-		_onClickBreadCrumb: function(e) {
-			var $el = $(e.target).closest('.crumb'),
-				index = $el.index(),
-				$targetDir = $el.data('dir');
-			// first one is home, let the link makes it default action
-			if (index !== 0) {
-				e.preventDefault();
-				this.changeDirectory($targetDir);
-			}
 		},
 
 		_renderRow: function(fileData, options) {

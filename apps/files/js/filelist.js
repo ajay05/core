@@ -12,6 +12,11 @@
 /* global dragOptions, folderDropOptions */
 
 (function() {
+	/**
+	 * The FileList class manages a file list view.
+	 * A file list view consists of a controls bar and
+	 * a file list table.
+	 */
 	var FileList = function($el) {
 		this.initialize($el);
 	};
@@ -119,6 +124,7 @@
 
 			this.$fileList.on('click','td.filename>a.name', _.bind(this._onClickFile, this));
 			this.$fileList.on('change', 'td.filename>input:checkbox', _.bind(this._onClickFileCheckbox, this));
+			this.$el.on('urlChanged', _.bind(this._onUrlChanged, this));
 			this.$el.find('#select_all').click(_.bind(this._onClickSelectAll, this));
 			this.$el.find('.download').click(_.bind(this._onClickDownloadSelected, this));
 			this.$el.find('.delete-selected').click(_.bind(this._onClickDeleteSelected, this));
@@ -127,6 +133,15 @@
 
 			// FIXME: only do this when visible
 			$(window).scroll(function(e) {self._onScroll(e);});
+		},
+
+		/**
+		 * Event handler for when the URL changed
+		 */
+		_onUrlChanged: function(e) {
+			if (e && e.dir) {
+				this.changeDirectory(e.dir, false, true);
+			}
 		},
 
 		/**
@@ -709,12 +724,14 @@
 				return;
 			}
 			this._setCurrentDir(targetDir, changeUrl);
-			$('#fileList').trigger(
-				jQuery.Event('changeDirectory', {
-					dir: targetDir,
-					previousDir: currentDir
-				}
-			));
+			if (changeUrl) {
+				$('#fileList').trigger(
+					jQuery.Event('changeDirectory', {
+						dir: targetDir,
+						previousDir: currentDir
+					}
+				));
+			}
 			this._selectedFiles = {};
 			this._selectionSummary.clear();
 			this.reload();
@@ -748,19 +765,9 @@
 
 			this.$el.find('#dir').val(targetDir);
 
-			// FIXME: reenable once URL scheme has been decided
-			/*
 			if (changeUrl !== false) {
-				if (window.history.pushState && changeUrl !== false) {
-					url = this.linkTo(targetDir);
-					window.history.pushState({dir: targetDir}, '', url);
-				}
-				// use URL hash for IE8
-				else{
-					window.location.hash = '?dir='+ encodeURIComponent(targetDir).replace(/%2F/g, '/');
-				}
+				this.$el.trigger(jQuery.Event('directoryChanged', {dir: targetDir}));
 			}
-			*/
 			this.breadcrumb.setDirectory(this.getCurrentDirectory());
 		},
 		/**

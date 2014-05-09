@@ -69,8 +69,10 @@ OCA.Trashbin.App = {
 
 $(document).ready(function() {
 	$('#app-content-trashbin').on('show', function() {
-		OCA.Trashbin.App.initialize($('#app-content-trashbin'));
-		OCA.Trashbin.App.fileList.reload();
+		var App = OCA.Trashbin.App;
+		App.initialize($('#app-content-trashbin'));
+		// force breadcrumb init
+		// App.fileList.changeDirectory(App.fileList.getCurrentDirectory(), false, true);
 	});
 });
 

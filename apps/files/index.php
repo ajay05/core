@@ -38,38 +38,26 @@ OCP\Util::addscript('files', 'breadcrumb');
 OCP\Util::addscript('files', 'filelist');
 
 OCP\App::setActiveNavigationEntry('files_index');
-// Load the files
-$dir = isset($_GET['dir']) ? stripslashes($_GET['dir']) : '';
-$dir = \OC\Files\Filesystem::normalizePath($dir);
-$dirInfo = \OC\Files\Filesystem::getFileInfo($dir, false);
-// Redirect if directory does not exist
-if (!$dirInfo || !$dirInfo->getType() === 'dir') {
-	header('Location: ' . OCP\Util::getScriptName() . '');
-	exit();
-}
 
 $isIE8 = false;
 preg_match('/MSIE (.*?);/', $_SERVER['HTTP_USER_AGENT'], $matches);
-if (count($matches) > 0 && $matches[1] <= 8){
+if (count($matches) > 0 && $matches[1] <= 9) {
 	$isIE8 = true;
 }
 
-// if IE8 and "?dir=path" was specified, reformat the URL to use a hash like "#?dir=path"
-if ($isIE8 && isset($_GET['dir'])){
-	if ($dir === ''){
-		$dir = '/';
-	}
-	header('Location: ' . OCP\Util::linkTo('files', 'index.php') . '#?dir=' . \OCP\Util::encodePath($dir));
+// if IE8 and "?dir=path&view=someview" was specified, reformat the URL to use a hash like "#?dir=path&view=someview"
+if ($isIE8 && (isset($_GET['dir']) || isset($_GET['view']))) {
+	$hash = '#?';
+	$dir = isset($_GET['dir']) ? $_GET['dir'] : '/';
+	$view = isset($_GET['view']) ? $_GET['view'] : 'files';
+	$hash = '#?dir=' . \OCP\Util::encodePath($dir) + '&view=' + urlencode($view);
+	header('Location: ' . OCP\Util::linkTo('files', 'index.php') . $hash);
 	exit();
 }
 
 $user = OC_User::getUser();
 
 $config = \OC::$server->getConfig();
-
-// needed for share init, permissions will be reloaded
-// anyway with ajax load
-$permissions = $dirInfo->getPermissions();
 
 // information about storage capacities
 $storageInfo=OC_Helper::getStorageInfo($dir, $dirInfo);
@@ -121,8 +109,6 @@ OCP\Util::addscript('files', 'files');
 OCP\Util::addscript('files', 'navigation');
 OCP\Util::addscript('files', 'keyboardshortcuts');
 $tmpl = new OCP\Template('files', 'index', 'user');
-$tmpl->assign('dir', $dir);
-$tmpl->assign('permissions', $permissions);
 $tmpl->assign('uploadMaxFilesize', $maxUploadFilesize); // minimium of freeSpace and uploadLimit
 $tmpl->assign('uploadMaxHumanFilesize', OCP\Util::humanFileSize($maxUploadFilesize));
 $tmpl->assign('freeSpace', $freeSpace);

@@ -1,6 +1,6 @@
 <?php $_['appNavigation']->printPage(); ?>
 <div id="app-content">
-<div id="app-content-files">
+<div id="app-content-files" class="hidden">
 <div id="controls">
 		<div class="actions creatable hidden">
 			<?php if(!isset($_['dirToken'])):?>
@@ -50,7 +50,7 @@
 		<div class="notCreatable notPublic hidden">
 			<?php p($l->t('You don’t have permission to upload or create files here'))?>
 		</div>
-	<input type="hidden" name="permissions" value="<?php p($_['permissions']); ?>" id="permissions">
+	<input type="hidden" name="permissions" value="" id="permissions">
 </div>
 
 <div id="emptycontent" class="hidden"><?php p($l->t('Nothing in here. Upload something!'))?></div>
