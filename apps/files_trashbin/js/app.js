@@ -16,6 +16,7 @@ OCA.Trashbin.App = {
 		if (this._initialized) {
 			return;
 		}
+		this._initialized = true;
 		this.fileList = new OCA.Trashbin.FileList($el);
 		this.registerFileActions(this.fileList);
 	},

@@ -19,8 +19,22 @@
 		appName: t('files', 'Files'),
 		isEmpty: true,
 		useUndo:true,
-		$el: $('#filestable'),
-		$fileList: $('#fileList'),
+
+		/**
+		 * Top-level container with controls and file list
+		 */
+		$el: null,
+
+		/**
+		 * Files table
+		 */
+		$table: null,
+
+		/**
+		 * List of rows (table tbody)
+		 */
+		$fileList: null,
+
 		breadcrumb: null,
 
 		/**
@@ -78,6 +92,7 @@
 			}
 
 			this.$el = $el;
+			this.$table = $el.find('table:first');
 			this.$fileList = $el.find('#fileList');
 			this.fileActions = OCA.Files.FileActions;
 			this.files = [];
@@ -1182,10 +1197,10 @@
 			return new OCA.Files.FileSummary($tr);
 		},
 		updateEmptyContent: function() {
-			var permissions = $('#permissions').val();
+			var permissions = this.getDirectoryPermissions();
 			var isCreatable = (permissions & OC.PERMISSION_CREATE) !== 0;
-			$('#emptycontent').toggleClass('hidden', !isCreatable || !this.isEmpty);
-			$('#filestable thead th').toggleClass('hidden', this.isEmpty);
+			this.$el.find('#emptycontent').toggleClass('hidden', !isCreatable || !this.isEmpty);
+			this.$el.find('#filestable thead th').toggleClass('hidden', this.isEmpty);
 		},
 		/**
 		 * Shows the loading mask.
@@ -1194,18 +1209,18 @@
 		 */
 		showMask: function() {
 			// in case one was shown before
-			var $mask = $('#content .mask');
+			var $mask = this.$el.find('.mask');
 			if ($mask.exists()) {
 				return;
 			}
 
-			this.$el.addClass('hidden');
+			this.$table.addClass('hidden');
 
 			$mask = $('<div class="mask transparent"></div>');
 
 			$mask.css('background-image', 'url('+ OC.imagePath('core', 'loading.gif') + ')');
 			$mask.css('background-repeat', 'no-repeat');
-			$('#content').append($mask);
+			this.$el.append($mask);
 
 			$mask.removeClass('transparent');
 		},
@@ -1214,8 +1229,8 @@
 		 * @see #showMask
 		 */
 		hideMask: function() {
-			$('#content .mask').remove();
-			this.$el.removeClass('hidden');
+			this.$el.find('.mask').remove();
+			this.$table.removeClass('hidden');
 		},
 		scrollTo:function(file) {
 			//scroll to and highlight preselected file

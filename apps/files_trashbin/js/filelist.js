@@ -120,10 +120,9 @@
 		},
 
 		updateEmptyContent: function(){
-			var $fileList = $('#fileList');
-			var exists = $fileList.find('tr:first').exists();
-			$('#emptycontent').toggleClass('hidden', exists);
-			$('#filestable th').toggleClass('hidden', !exists);
+			var exists = this.$fileList.find('tr:first').exists();
+			this.$el.find('#emptycontent').toggleClass('hidden', exists);
+			this.$el.find('#filestable th').toggleClass('hidden', !exists);
 		},
 
 		_removeCallback: function(result) {
@@ -246,13 +245,13 @@
 		},
 
 		enableActions: function() {
-			$(".action").css("display", "inline");
-			$(":input:checkbox").css("display", "inline");
+			this.$el.find('.action').css('display', 'inline');
+			this.$el.find(':input:checkbox').css('display', 'inline');
 		},
 
 		disableActions: function() {
-			$(".action").css("display", "none");
-			$(":input:checkbox").css("display", "none");
+			this.$el.find('.action').css('display', 'none');
+			this.$el.find(':input:checkbox').css('display', 'none');
 		}
 
 	});
