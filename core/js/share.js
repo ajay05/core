@@ -237,9 +237,19 @@ OC.Share={
 			}
 
 			html += '<div id="expiration">';
+			var defaultExpireMessage = '';
+			if ((itemType === 'folder' || itemType === 'file') && oc_appconfig.core.defaultExpireDateEnabled === 'yes') {
+				if (oc_appconfig.core.defaultExpireDateEnforced === 'yes') {
+					defaultExpireMessage = '<br/>' + t('core', 'Shares will expire not later than {days} days after they were shared',  {'days': oc_appconfig.core.defaultExpireDate});
+				} else {
+					defaultExpireMessage = '<br/>' + t('core', 'By default shares will expire after {days} days', {'days': oc_appconfig.core.defaultExpireDate});
+				}
+			}
+
 			html += '<input type="checkbox" name="expirationCheckbox" id="expirationCheckbox" value="1" /><label for="expirationCheckbox">'+t('core', 'Set expiration date')+'</label>';
-			html += '<input id="expirationDate" type="text" placeholder="'+t('core', 'Expiration date')+'" style="display:none; width:90%;" />';
-			html += '</div>';
+			html += '<div id="expirationDateArea" style="display:none;"><input id="expirationDate" type="text" placeholder="'+t('core', 'Expiration date')+'" style="width:90%;" />';
+			html += defaultExpireMessage;
+			html += '</div></div>';
 			dropDownEl = $(html);
 			dropDownEl = dropDownEl.appendTo(appendTo);
 			// Reset item shares
@@ -502,7 +512,6 @@ OC.Share={
 		$('#emailPrivateLink #email').hide();
 		$('#emailPrivateLink #emailButton').hide();
 		$('#allowPublicUploadWrapper').hide();
-		$('#expirationDate').hide();
 	},
 	dirname:function(path) {
 		return path.replace(/\\/g,'/').replace(/\/[^\/]*$/, '');
@@ -510,8 +519,8 @@ OC.Share={
 	showExpirationDate:function(date) {
 		$('#expirationCheckbox').attr('checked', true);
 		$('#expirationDate').val(date);
-		$('#expirationDate').show('blind');
-		$('#expirationDate').css('display','block');
+		$('#expirationDateArea').show('blind');
+		$('#expirationDateArea').css('display','block');
 		$('#expirationDate').datepicker({
 			dateFormat : 'dd-mm-yy'
 		});
@@ -733,7 +742,8 @@ $(document).ready(function() {
 				if (!result || result.status !== 'success') {
 					OC.dialogs.alert(t('core', 'Error unsetting expiration date'), t('core', 'Error'));
 				}
-				$('#expirationDate').hide('blind');
+				$('#expirationDateArea').hide('blind');
+				$('#defaultExpireDateMessage').addClass('hidden');
 			});
 		}
 	});
