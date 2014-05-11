@@ -51,7 +51,7 @@ class OC_Filesystem {
 	 *
 	 * @deprecated OC_Filesystem is replaced by \OC\Files\Filesystem
 	 * @param string $path
-	 * @return array consisting of the storage and the internal path
+	 * @return array an array consisting of the storage and the internal path
 	 */
 	static public function resolvePath($path) {
 		return \OC\Files\Filesystem::resolvePath($path);
