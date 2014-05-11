@@ -174,8 +174,8 @@ class DIContainer extends SimpleContainer implements IAppContainer{
 	}
 
 	/**
-	 * @param $message
-	 * @param $level
+	 * @param string $message
+	 * @param string $level
 	 * @return mixed
 	 */
 	function log($message, $level) {
